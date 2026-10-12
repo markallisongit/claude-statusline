@@ -63,7 +63,16 @@ sep="${c_sep} | ${reset}"
 
 segments=()
 segments+=("${c_user}$(whoami | clean)@$(uname -n | cut -d. -f1 | clean)${reset}")
-segments+=("${c_dir}${cwd}${reset}")
+
+# Show the home directory as ~
+dir=$cwd
+if [ -n "$HOME" ]; then
+  case $cwd in
+    "$HOME") dir='~' ;;
+    "$HOME"/*) dir="~${cwd#"$HOME"}" ;;
+  esac
+fi
+segments+=("${c_dir}${dir}${reset}")
 
 if [ -n "$git_branch" ]; then
   segments+=("${c_branch}${git_branch}${reset}")

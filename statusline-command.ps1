@@ -43,9 +43,17 @@ if ($cwd -and (Get-Command git -ErrorAction SilentlyContinue)) {
     if ($LASTEXITCODE -eq 0) { $branch = Clean (git -C $cwd symbolic-ref --short HEAD 2> $null) }
 }
 
+# Show the home folder as ~. Windows paths are case-insensitive
+$display = $cwd
+$userHome = $env:USERPROFILE.TrimEnd('\', '/')
+if ($cwd -and $userHome) {
+    if ($cwd -ieq $userHome) { $display = '~' }
+    elseif ($cwd.StartsWith("$userHome\", [StringComparison]::OrdinalIgnoreCase) -or $cwd.StartsWith("$userHome/", [StringComparison]::OrdinalIgnoreCase)) { $display = '~' + $cwd.Substring($userHome.Length) }
+}
+
 $segments = @()
 $segments += Paint '1;38;2;203;166;247' "$(Clean $env:USERNAME)@$(Clean $env:COMPUTERNAME)"
-$segments += Paint '38;2;137;180;250' $cwd
+$segments += Paint '38;2;137;180;250' $display
 if ($branch) { $segments += Paint '38;2;166;227;161' $branch }
 if ($model) { $segments += Paint '38;2;180;190;254' $model }
 if ($effort) { $segments += Paint '38;2;250;179;135' $effort }
