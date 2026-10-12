@@ -1,9 +1,12 @@
 #!/bin/bash
 input=$(cat)
 
-cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // empty')
-model=$(echo "$input" | jq -r '.model.display_name // empty')
-effort=$(echo "$input" | jq -r '.effort.level // empty')
+# Drop control bytes (ESC, BEL, ...) from values we print, so a crafted directory name can't inject terminal escapes
+strip() { tr -d '\000-\037\177'; }
+
+cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // empty' | strip)
+model=$(echo "$input" | jq -r '.model.display_name // empty' | strip)
+effort=$(echo "$input" | jq -r '.effort.level // empty' | strip)
 ctx=$(echo "$input" | jq -r '.context_window.used_percentage // empty | round')
 session_left=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty | 100 - . | round')
 week_left=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty | 100 - . | round')
