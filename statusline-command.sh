@@ -1,16 +1,41 @@
 #!/bin/bash
-input=$(cat)
 
-# Strip control characters (C0, DEL and C1) from text we print, so a crafted directory or branch name can't inject terminal escapes
-clean() { jq -Rj 'gsub("\\p{Cc}"; "")'; }
+# Drop control bytes (C0, DEL and C1) so a crafted directory or branch name can't inject terminal escapes
+clean() { LC_ALL=C tr -d '\000-\037\177' | LC_ALL=C sed $'s/\xc2[\x80-\x9f]//g'; }
 
-cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // empty' | clean)
-model=$(echo "$input" | jq -r '.model.display_name // empty' | clean)
-effort=$(echo "$input" | jq -r '.effort.level // empty' | clean)
-ctx=$(echo "$input" | jq -r '.context_window.used_percentage // empty | round')
-session_left=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty | 100 - . | round')
-week_left=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty | 100 - . | round')
-week_reset=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
+# Text after the first "$1" key in JSON text "$2", or nothing if absent
+after() { local pat="\"$1\""; [[ $2 == *"$pat"* ]] && printf '%s' "${2#*"$pat"}"; return 0; }
+
+# Scalar value of key "$1" in JSON text "$2": string contents or bare number; nothing for null or absent
+val() {
+  local rest=$2 pat="\"$1\""
+  [[ $rest == *"$pat"* ]] || return 0
+  rest=${rest#*"$pat"}; rest=${rest#*:}; rest=${rest#"${rest%%[![:space:]]*}"}
+  case $rest in
+    \"*) rest=${rest#\"}; printf '%s' "${rest%%\"*}" ;;
+    null*) ;;
+    *) printf '%s' "${rest%%[,\}]*}" ;;
+  esac
+}
+
+round() { printf '%.0f' "$1"; }
+
+json=$(clean)
+
+cwd=$(val current_dir "$(after workspace "$json")")
+[ -n "$cwd" ] || cwd=$(val cwd "$json")
+cwd=${cwd//\\\\/\\}
+model=$(val display_name "$(after model "$json")")
+effort=$(val level "$(after effort "$json")")
+ctx=$(val used_percentage "$(after context_window "$json")")
+session_used=$(val used_percentage "$(after five_hour "$json")")
+week_used=$(val used_percentage "$(after seven_day "$json")")
+week_reset=$(val resets_at "$(after seven_day "$json")")
+
+[ -n "$ctx" ] && ctx=$(round "$ctx")
+[ -n "$session_used" ] && session_left=$(( 100 - $(round "$session_used") ))
+[ -n "$week_used" ] && week_left=$(( 100 - $(round "$week_used") ))
+week_reset=${week_reset%%.*}
 
 # Git branch (skip optional locks)
 git_branch=''
@@ -34,7 +59,7 @@ reset=$'\033[0m'
 sep="${c_sep} | ${reset}"
 
 segments=()
-segments+=("${c_user}$(whoami | clean)@$(hostname -s | clean)${reset}")
+segments+=("${c_user}$(whoami | clean)@$(uname -n | cut -d. -f1 | clean)${reset}")
 segments+=("${c_dir}${cwd}${reset}")
 
 if [ -n "$git_branch" ]; then

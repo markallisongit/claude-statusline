@@ -10,30 +10,30 @@ Shows user@host, directory, git branch, model, effort, context used, session and
 
 ## Install
 
-Needs `jq` and `git`.
-
-**Linux**
+**Linux** needs `bash`. The one-liner also needs `curl`. `git` is optional and only shows the branch.
 
 ```
-sudo apt install jq        # or: sudo dnf install jq
+curl -fsSL https://raw.githubusercontent.com/markallisongit/claude-statusline/main/install.sh | bash
+```
+
+or clone and run:
+
+```
 git clone https://github.com/markallisongit/claude-statusline.git
 bash claude-statusline/install.sh
 ```
 
-**Windows**
-
-Run these in Git Bash (from Git for Windows), not PowerShell. In PowerShell, `bash` can resolve to WSL's bash.
+**Windows** needs Git for Windows, which Claude Code already requires. In PowerShell:
 
 ```
-winget install jqlang.jq
-git clone https://github.com/markallisongit/claude-statusline.git
-bash claude-statusline/install.sh
+winget install Git.Git
+irm https://raw.githubusercontent.com/markallisongit/claude-statusline/main/install.ps1 | iex
 ```
+
+Open a new terminal after installing Git.
 
 The installer copies the script to `~/.claude/statusline-command.sh` and sets `statusLine` in `~/.claude/settings.json`. The previous settings are saved to `settings.json.bak`.
 
 ## Update
 
-```
-git -C claude-statusline pull && bash claude-statusline/install.sh
-```
+Re-run the install command for your platform.

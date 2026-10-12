@@ -1,15 +1,21 @@
 #!/bin/bash
-# Installs the statusline for the current user. Needs jq.
+# Installs the statusline for the current user. Needs curl only when piped.
 set -euo pipefail
 
-command -v jq > /dev/null || { echo "jq is required: install it first" >&2; exit 1; }
+raw=https://raw.githubusercontent.com/markallisongit/claude-statusline/main
 
-src_dir=$(cd "$(dirname "$0")" && pwd)
 claude_dir="$HOME/.claude"
 settings="$claude_dir/settings.json"
 
 mkdir -p "$claude_dir"
-cp "$src_dir/statusline-command.sh" "$claude_dir/statusline-command.sh"
+
+# Piped from curl: no checkout beside the script, so fetch it
+src_dir=$(cd "$(dirname "$0")" && pwd)
+if [ -f "$src_dir/statusline-command.sh" ]; then
+  cp "$src_dir/statusline-command.sh" "$claude_dir/statusline-command.sh"
+else
+  curl -fsSL "$raw/statusline-command.sh" -o "$claude_dir/statusline-command.sh"
+fi
 
 # Git Bash on Windows: pin its bash.exe so the command never resolves to WSL's bash
 cmd="bash ~/.claude/statusline-command.sh"
@@ -19,10 +25,23 @@ esac
 
 [ -f "$settings" ] || echo '{}' > "$settings"
 cp "$settings" "$settings.bak"
-tmp=$(mktemp)
-jq --arg cmd "$cmd" '.statusLine = {type: "command", command: $cmd}' "$settings" > "$tmp"
-cat "$tmp" > "$settings"
-rm -f "$tmp"
+
+# Text edit, not a JSON round trip, so every other byte of settings.json is kept
+new="\"statusLine\": {\"type\": \"command\", \"command\": \"${cmd//\"/\\\"}\"}"
+text=$(cat "$settings")
+compact=$(printf '%s' "$text" | tr -d '[:space:]')
+if [ -z "$compact" ] || [ "$compact" = '{}' ]; then
+  text="{$new}"
+elif [[ $text == *'"statusLine"'* ]]; then
+  rest=${text#*\"statusLine\"}; rest=${rest#*:}; rest=${rest#"${rest%%[![:space:]]*}"}
+  [[ $rest == \{* ]] || { echo "statusLine in $settings is not an object: fix it by hand" >&2; exit 1; }
+  pre=${text%%\"statusLine\"*}
+  post=${text#*\"statusLine\"}; post=${post#*\}}
+  text="$pre$new$post"
+else
+  text=${text/\{/\{$'\n'  $new,}
+fi
+printf '%s\n' "$text" > "$settings"
 
 echo "Installed to $claude_dir. statusLine: $cmd"
 echo "Previous settings saved to $settings.bak"
