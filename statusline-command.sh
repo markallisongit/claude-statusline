@@ -1,12 +1,12 @@
 #!/bin/bash
 input=$(cat)
 
-# Drop control bytes (ESC, BEL, ...) from values we print, so a crafted directory name can't inject terminal escapes
-strip() { tr -d '\000-\037\177'; }
+# Strip control characters (C0, DEL and C1) from text we print, so a crafted directory or branch name can't inject terminal escapes
+clean() { jq -Rj 'gsub("\\p{Cc}"; "")'; }
 
-cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // empty' | strip)
-model=$(echo "$input" | jq -r '.model.display_name // empty' | strip)
-effort=$(echo "$input" | jq -r '.effort.level // empty' | strip)
+cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // empty' | clean)
+model=$(echo "$input" | jq -r '.model.display_name // empty' | clean)
+effort=$(echo "$input" | jq -r '.effort.level // empty' | clean)
 ctx=$(echo "$input" | jq -r '.context_window.used_percentage // empty | round')
 session_left=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty | 100 - . | round')
 week_left=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty | 100 - . | round')
@@ -15,7 +15,7 @@ week_reset=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
 # Git branch (skip optional locks)
 git_branch=''
 if [ -n "$cwd" ] && GIT_OPTIONAL_LOCKS=0 git -C "$cwd" rev-parse --git-dir > /dev/null 2>&1; then
-  git_branch=$(GIT_OPTIONAL_LOCKS=0 git -C "$cwd" symbolic-ref --short HEAD 2>/dev/null)
+  git_branch=$(GIT_OPTIONAL_LOCKS=0 git -C "$cwd" symbolic-ref --short HEAD 2>/dev/null | clean)
 fi
 
 # Catppuccin Mocha palette (truecolor, tuned for dark backgrounds)
@@ -34,7 +34,7 @@ reset=$'\033[0m'
 sep="${c_sep} | ${reset}"
 
 segments=()
-segments+=("${c_user}$(whoami)@$(hostname -s)${reset}")
+segments+=("${c_user}$(whoami | clean)@$(hostname -s | clean)${reset}")
 segments+=("${c_dir}${cwd}${reset}")
 
 if [ -n "$git_branch" ]; then
