@@ -3,20 +3,22 @@
 # Drop control bytes (C0, DEL and C1) so a crafted directory or branch name can't inject terminal escapes
 clean() { LC_ALL=C tr -d '\000-\037\177' | LC_ALL=C sed $'s/\xc2[\x80-\x9f]//g'; }
 
-# Text after the first "$1" key in JSON text "$2", or nothing if absent
-after() { local pat="\"$1\""; [[ $2 == *"$pat"* ]] && printf '%s' "${2#*"$pat"}"; return 0; }
+# Text after the object key "$1" in JSON text "$2", or nothing if absent. A key is a string followed by a colon
+after() { [[ $2 =~ \"$1\"[[:space:]]*: ]] || return 0; printf '%s' "${2#*"${BASH_REMATCH[0]}"}"; }
 
 # Scalar value of key "$1" in JSON text "$2": string contents or bare number; nothing for null or absent
 val() {
-  local rest=$2 pat="\"$1\""
-  [[ $rest == *"$pat"* ]] || return 0
-  rest=${rest#*"$pat"}; rest=${rest#*:}; rest=${rest#"${rest%%[![:space:]]*}"}
+  local rest v
+  rest=$(after "$1" "$2"); rest=${rest#"${rest%%[![:space:]]*}"}
   case $rest in
     \"*) rest=${rest#\"}; printf '%s' "${rest%%\"*}" ;;
     null*) ;;
-    *) printf '%s' "${rest%%[,\}]*}" ;;
+    *) v=${rest%%[,\}]*}; printf '%s' "${v%"${v##*[![:space:]]}"}" ;;
   esac
 }
+
+# Keep only a plain decimal: bash arithmetic would evaluate anything else, including command substitutions
+num() { [[ $1 =~ ^[0-9]+(\.[0-9]+)?$ ]] && printf '%s' "$1"; return 0; }
 
 round() { printf '%.0f' "$1"; }
 
@@ -27,10 +29,10 @@ cwd=$(val current_dir "$(after workspace "$json")")
 cwd=${cwd//\\\\/\\}
 model=$(val display_name "$(after model "$json")")
 effort=$(val level "$(after effort "$json")")
-ctx=$(val used_percentage "$(after context_window "$json")")
-session_used=$(val used_percentage "$(after five_hour "$json")")
-week_used=$(val used_percentage "$(after seven_day "$json")")
-week_reset=$(val resets_at "$(after seven_day "$json")")
+ctx=$(num "$(val used_percentage "$(after context_window "$json")")")
+session_used=$(num "$(val used_percentage "$(after five_hour "$json")")")
+week_used=$(num "$(val used_percentage "$(after seven_day "$json")")")
+week_reset=$(num "$(val resets_at "$(after seven_day "$json")")")
 
 [ -n "$ctx" ] && ctx=$(round "$ctx")
 [ -n "$session_used" ] && session_left=$(( 100 - $(round "$session_used") ))

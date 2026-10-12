@@ -9,10 +9,10 @@ settings="$claude_dir/settings.json"
 
 mkdir -p "$claude_dir"
 
-# Piped from curl: no checkout beside the script, so fetch it
-src_dir=$(cd "$(dirname "$0")" && pwd)
-if [ -f "$src_dir/statusline-command.sh" ]; then
-  cp "$src_dir/statusline-command.sh" "$claude_dir/statusline-command.sh"
+# Copy from a checkout only when run as a file. Piped installs fetch it; never trust the cwd
+src=${BASH_SOURCE[0]:-}
+if [ -n "$src" ] && [ -f "$src" ]; then
+  cp "$(dirname "$src")/statusline-command.sh" "$claude_dir/statusline-command.sh"
 else
   curl -fsSL "$raw/statusline-command.sh" -o "$claude_dir/statusline-command.sh"
 fi
