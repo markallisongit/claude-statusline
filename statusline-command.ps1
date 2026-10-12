@@ -57,13 +57,13 @@ if (IsNumber $usedCtx) {
 }
 
 if (IsNumber $usedSession) {
-    $left = Round (100 - [double]$usedSession)
-    $segments += "${esc}[38;2;186;194;222mS${esc}[38;2;127;132;156m$left%$reset"
+    $used = Round $usedSession
+    $segments += "${esc}[38;2;186;194;222mS${esc}[38;2;127;132;156m$used%$reset"
 }
 
 if (IsNumber $usedWeek) {
-    $left = Round (100 - [double]$usedWeek)
-    $segments += "${esc}[38;2;186;194;222mW${esc}[38;2;127;132;156m$left%$reset"
+    $used = Round $usedWeek
+    $segments += "${esc}[38;2;186;194;222mW${esc}[38;2;127;132;156m$used%$reset"
 }
 
 if (IsNumber $weekReset) {

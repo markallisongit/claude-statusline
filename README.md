@@ -6,7 +6,7 @@ Status line for Claude Code:
 user@host | ~/project | main | Haiku 5.5 | xhigh | ctx:17% | S63% | W40% | 3d3h remaining
 ```
 
-Shows user@host, directory, git branch, model, effort, context used, session and week usage left, and time until the weekly reset.
+Shows user@host, directory, git branch, model, effort, context used, session and week usage used (matches `/usage`), and time until the weekly reset.
 
 ## Install
 

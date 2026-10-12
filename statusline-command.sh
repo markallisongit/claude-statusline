@@ -36,8 +36,8 @@ week_used=$(num "$(val used_percentage "$(after seven_day "$json")")")
 week_reset=$(num "$(val resets_at "$(after seven_day "$json")")")
 
 [ -n "$ctx" ] && ctx=$(round "$ctx")
-[ -n "$session_used" ] && session_left=$(( 100 - $(round "$session_used") ))
-[ -n "$week_used" ] && week_left=$(( 100 - $(round "$week_used") ))
+[ -n "$session_used" ] && session_used=$(round "$session_used")
+[ -n "$week_used" ] && week_used=$(round "$week_used")
 week_reset=${week_reset%%.*}
 
 # Git branch (skip optional locks)
@@ -88,12 +88,12 @@ if [ -n "$ctx" ]; then
   segments+=("${ctx_color}ctx:${ctx}%${reset}")
 fi
 
-if [ -n "$session_left" ]; then
-  segments+=("${c_label}S${c_muted}${session_left}%${reset}")
+if [ -n "$session_used" ]; then
+  segments+=("${c_label}S${c_muted}${session_used}%${reset}")
 fi
 
-if [ -n "$week_left" ]; then
-  segments+=("${c_label}W${c_muted}${week_left}%${reset}")
+if [ -n "$week_used" ]; then
+  segments+=("${c_label}W${c_muted}${week_used}%${reset}")
 fi
 
 if [ -n "$week_reset" ]; then
