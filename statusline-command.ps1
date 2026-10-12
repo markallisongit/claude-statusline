@@ -8,7 +8,7 @@ function Clean($value) {
 }
 
 function IsNumber($value) {
-    return ($value -is [double]) -or ($value -is [int64]) -or ($value -is [int])
+    return ($value -is [double]) -or ($value -is [decimal]) -or ($value -is [int64]) -or ($value -is [int])
 }
 
 # Rounds half away from zero
