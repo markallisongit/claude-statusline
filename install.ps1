@@ -16,8 +16,10 @@
     Invoke-WebRequest -UseBasicParsing -OutFile $script `
         -Uri 'https://raw.githubusercontent.com/markallisongit/claude-statusline/main/statusline-command.ps1'
 
-    # Forward slashes so the path survives whichever shell Claude Code runs the command in
-    $cmd = 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + ($script -replace '\\', '/') + '"'
+    # Absolute powershell.exe: cmd.exe searches the working directory before PATH, so a bare name
+    # could run a planted binary from a project. Forward slashes survive whichever shell runs it
+    $powershell = ($env:SystemRoot -replace '\\', '/') + '/System32/WindowsPowerShell/v1.0/powershell.exe'
+    $cmd = '"' + $powershell + '" -NoProfile -ExecutionPolicy Bypass -File "' + ($script -replace '\\', '/') + '"'
 
     $raw = $null
     $backup = $null

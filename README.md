@@ -38,7 +38,7 @@ The installers write to your Claude Code config folder, `~/.claude`:
 | | Script | `statusLine` command in `settings.json` |
 |---|---|---|
 | Linux | `~/.claude/statusline-command.sh` | `bash ~/.claude/statusline-command.sh` |
-| Windows | `%USERPROFILE%\.claude\statusline-command.ps1` | `powershell ... -File "<path>"` |
+| Windows | `%USERPROFILE%\.claude\statusline-command.ps1` | `"<Windows>\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -ExecutionPolicy Bypass -File "<path>"` |
 
 The previous settings are saved to `settings.json.bak`. Other settings are kept.
 
