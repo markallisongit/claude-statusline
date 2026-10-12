@@ -1,4 +1,5 @@
 #!/bin/bash
+# Claude Code status line for Linux. Windows: statusline-command.ps1
 
 # Drop control bytes (C0, DEL and C1) so a crafted directory or branch name can't inject terminal escapes
 clean() { LC_ALL=C tr -d '\000-\037\177' | LC_ALL=C sed $'s/\xc2[\x80-\x9f]//g'; }

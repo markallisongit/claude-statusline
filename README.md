@@ -10,29 +10,37 @@ Shows user@host, directory, git branch, model, effort, context used, session and
 
 ## Install
 
-**Linux** needs `bash`. The one-liner also needs `curl`. `git` is optional and only shows the branch.
+No packages to install. `git` is optional and only shows the branch.
+
+**Linux** needs `bash` and either `curl` or `wget`:
 
 ```
 curl -fsSL https://raw.githubusercontent.com/markallisongit/claude-statusline/main/install.sh | bash
 ```
 
-or clone and run:
+Without curl, use `wget -qO- <same URL> | bash`.
+
+Or clone and run:
 
 ```
 git clone https://github.com/markallisongit/claude-statusline.git
 bash claude-statusline/install.sh
 ```
 
-**Windows** needs Git for Windows, which Claude Code already requires. In PowerShell:
+**Windows** needs Windows PowerShell 5.1 or later, which Windows 10 and 11 include. In PowerShell:
 
 ```
-winget install Git.Git
 irm https://raw.githubusercontent.com/markallisongit/claude-statusline/main/install.ps1 | iex
 ```
 
-Open a new terminal after installing Git.
+The installers write to your Claude Code config folder, `~/.claude`:
 
-The installer copies the script to `~/.claude/statusline-command.sh` and sets `statusLine` in `~/.claude/settings.json`. The previous settings are saved to `settings.json.bak`.
+| | Script | `statusLine` command in `settings.json` |
+|---|---|---|
+| Linux | `~/.claude/statusline-command.sh` | `bash ~/.claude/statusline-command.sh` |
+| Windows | `%USERPROFILE%\.claude\statusline-command.ps1` | `powershell ... -File "<path>"` |
+
+The previous settings are saved to `settings.json.bak`. Other settings are kept.
 
 ## Update
 

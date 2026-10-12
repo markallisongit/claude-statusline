@@ -1,11 +1,18 @@
 #!/bin/bash
-# Installs the statusline for the current user. Needs curl only when piped.
+# Installs the statusline for the current user on Linux. Windows: install.ps1
 set -euo pipefail
+
+case "$(uname -s)" in
+  MINGW*|MSYS*|CYGWIN*) echo "On Windows, run install.ps1 in PowerShell instead" >&2; exit 1 ;;
+esac
 
 raw=https://raw.githubusercontent.com/markallisongit/claude-statusline/main
 
 claude_dir="$HOME/.claude"
 settings="$claude_dir/settings.json"
+
+# curl, or wget where curl is missing
+fetch() { if command -v curl > /dev/null; then curl -fsSL "$1" -o "$2"; else wget -qO "$2" "$1"; fi; }
 
 mkdir -p "$claude_dir"
 
@@ -14,14 +21,10 @@ src=${BASH_SOURCE[0]:-}
 if [ -n "$src" ] && [ -f "$src" ]; then
   cp "$(dirname "$src")/statusline-command.sh" "$claude_dir/statusline-command.sh"
 else
-  curl -fsSL "$raw/statusline-command.sh" -o "$claude_dir/statusline-command.sh"
+  fetch "$raw/statusline-command.sh" "$claude_dir/statusline-command.sh"
 fi
 
-# Git Bash on Windows: pin its bash.exe so the command never resolves to WSL's bash
 cmd="bash ~/.claude/statusline-command.sh"
-case "$(uname -s)" in
-  MINGW*|MSYS*) cmd="\"$(cygpath -m "$(command -v bash)")\" ~/.claude/statusline-command.sh" ;;
-esac
 
 [ -f "$settings" ] || echo '{}' > "$settings"
 cp "$settings" "$settings.bak"
